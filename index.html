@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMAN — Kitab Langit yang Kehilangan Bintang</title>
+    <style>
+        :root {
+            --bg-deep: #020510;
+            --bg-space: #0a0a1a;
+            --gold: #d4a853;
+            --gold-light: #e8d08f;
+            --star-blue: #7eb8da;
+            --star-white: #f0e6d3;
+            --text-body: #c8c0b8;
+            --text-dim: #8a8580;
+            --accent-red: #b34a3a;
+            --accent-purple: #6a4c93;
+            --accent-teal: #4a8c7e;
+            --card-bg: rgba(15, 12, 30, 0.7);
+            --border-subtle: rgba(255, 255, 255, 0.06);
+            --glow-soft: 0 0 30px rgba(212, 168, 83, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-deep);
+            color: var(--text-body);
+            font-family: 'Georgia', 'Times New Roman', serif;
+            line-height: 1.9;
+            overflow-x: hidden;
+            cursor: default;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* === STARFIELD CANVAS === */
+        #starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* === SCROLL PROGRESS BAR === */
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--gold), var(--star-blue), var(--accent-purple));
+            z-index: 1000;
+            transition: width 0.1s ease-out;
+            box-shadow: 0 0 12px rgba(212, 168, 83, 0.5);
+            border-radius: 0 2px 2px 0;
+        }
+
+        /* === MAIN CONTAINER === */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 40px 28px 120px;
+        }
+
+        /* === HEADER / HERO === */
+        .hero {
+            text-align: center;
+            padding: 100px 20px 70px;
+            position: relative;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(212, 168, 83, 0.06) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .hero .constellation-symbol {
+            font-size: 4rem;
+            letter-spacing: 0.3em;
+            color: var(--gold);
+            text-shadow: 0 0 40px rgba(212, 168, 83, 0.5);
+            margin-bottom: 20px;
+            animation: floatSlow 6s ease-in-out infinite;
+        }
+        @keyframes floatSlow {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-14px);
+            }
+        }
+        .hero h1 {
+            font-size: clamp(2.6rem, 6vw, 4.2rem);
+            font-weight: normal;
+            letter-spacing: 0.08em;
+            color: var(--star-white);
+            text-shadow: 0 0 50px rgba(212, 168, 83, 0.4), 0 0 120px rgba(212, 168, 83, 0.15);
+            margin-bottom: 12px;
+            font-family: 'Georgia', serif;
+        }
+        .hero .subtitle {
+            font-size: 1.2rem;
+            color: var(--gold-light);
+            letter-spacing: 0.18em;
+            font-style: italic;
+            opacity: 0.85;
+        }
+        .hero .divider {
+            width: 120px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            margin: 28px auto;
+        }
+
+        /* === NAVIGASI CHAPTER === */
+        .chapter-nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 30px 0 60px;
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+            background: rgba(5, 3, 16, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 16px 20px;
+            border-radius: 40px;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+        }
+        .chapter-nav button {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: var(--text-dim);
+            padding: 9px 17px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            transition: all 0.3s ease;
+            font-family: 'Georgia', serif;
+            white-space: nowrap;
+        }
+        .chapter-nav button:hover,
+        .chapter-nav button.active {
+            border-color: var(--gold);
+            color: var(--gold-light);
+            box-shadow: 0 0 20px rgba(212, 168, 83, 0.2);
+            background: rgba(212, 168, 83, 0.08);
+        }
+        .chapter-nav button.active {
+            background: rgba(212, 168, 83, 0.14);
+            font-weight: bold;
+        }
+
+        /* === SECTIONS === */
+        .section {
+            margin-bottom: 70px;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .section .roman-numeral {
+            font-size: 3.5rem;
+            color: var(--gold);
+            opacity: 0.3;
+            text-align: center;
+            margin-bottom: -10px;
+            letter-spacing: 0.15em;
+            font-family: 'Georgia', serif;
+        }
+        .section h2 {
+            font-size: 1.8rem;
+            color: var(--star-white);
+            text-align: center;
+            letter-spacing: 0.06em;
+            margin-bottom: 20px;
+            font-weight: normal;
+            text-shadow: 0 0 25px rgba(212, 168, 83, 0.25);
+        }
+        .section h3 {
+            font-size: 1.25rem;
+            color: var(--gold-light);
+            margin: 30px 0 12px;
+            letter-spacing: 0.04em;
+            font-weight: normal;
+            border-left: 3px solid var(--gold);
+            padding-left: 16px;
+        }
+        .section p {
+            margin-bottom: 18px;
+            text-indent: 1.5em;
+            color: var(--text-body);
+        }
+        .section .dialogue {
+            font-style: italic;
+            color: var(--star-blue);
+            border-left: 2px solid rgba(126, 184, 218, 0.3);
+            padding-left: 20px;
+            margin: 22px 0;
+            text-indent: 0;
+        }
+        .section .emphasis {
+            color: var(--star-white);
+            font-weight: bold;
+            letter-spacing: 0.02em;
+        }
+        .highlight-gold {
+            color: var(--gold-light);
+            font-style: italic;
+        }
+
+        /* === FACTION CARDS === */
+        .faction-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-subtle);
+            border-radius: 16px;
+            padding: 28px 24px;
+            margin: 24px 0;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            cursor: default;
+        }
+        .faction-card:hover {
+            border-color: rgba(212, 168, 83, 0.35);
+            box-shadow: var(--glow-soft);
+            transform: translateY(-3px);
+        }
+        .faction-card .faction-icon {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .faction-card h4 {
+            font-size: 1.2rem;
+            color: var(--star-white);
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+            font-weight: normal;
+        }
+        .faction-card .faction-motto {
+            font-size: 0.9rem;
+            color: var(--gold-light);
+            font-style: italic;
+            opacity: 0.8;
+            margin-bottom: 10px;
+            letter-spacing: 0.03em;
+        }
+        .faction-card .faction-desc {
+            font-size: 0.95rem;
+            color: var(--text-dim);
+            text-indent: 0;
+        }
+        .faction-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(212, 168, 83, 0.04) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        /* === BACK TO TOP === */
+        #back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 999;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(20, 16, 40, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--gold-light);
+            font-size: 1.4rem;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.35s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        #back-to-top.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #back-to-top:hover {
+            border-color: var(--gold);
+            box-shadow: 0 0 30px rgba(212, 168, 83, 0.3);
+            background: rgba(40, 30, 20, 0.7);
+        }
+
+        /* === FOOTER === */
+        .footer {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            letter-spacing: 0.08em;
+            border-top: 1px solid var(--border-subtle);
+            margin-top: 40px;
+        }
+        .footer .stars-divider {
+            letter-spacing: 0.4em;
+            color: var(--gold);
+            opacity: 0.5;
+            margin-bottom: 10px;
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 640px) {
+            .container {
+                padding: 20px 14px 80px;
+            }
+            .hero {
+                padding: 60px 10px 40px;
+            }
+            .hero h1 {
+                font-size: 2rem;
+            }
+            .chapter-nav {
+                gap: 6px;
+                padding: 10px 12px;
+                border-radius: 28px;
+            }
+            .chapter-nav button {
+                padding: 7px 12px;
+                font-size: 0.72rem;
+                letter-spacing: 0.02em;
+            }
+            .section h2 {
+                font-size: 1.4rem;
+            }
+            .section .roman-numeral {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- STARFIELD BACKGROUND -->
+    <canvas id="starfield"></canvas>
+
+    <!-- PROGRESS BAR -->
+    <div id="progress-bar"></div>
+
+    <!-- MAIN CONTENT -->
+    <div class="container">
+
+        <!-- HERO -->
+        <header class="hero">
+            <div class="constellation-symbol">✦ ✦ ✦</div>
+            <h1>OMAN</h1>
+            <p class="subtitle">Kitab Langit yang Kehilangan Bintang</p>
+            <div class="divider"></div>
+            <p style="color:var(--text-dim); font-style:italic; letter-spacing:0.05em; text-indent:0;">
+                "Di sini, bintang-bintang telah mati — tapi kematian bukanlah akhir."
+            </p>
+        </header>
+
+        <!-- NAVIGASI CHAPTER -->
+        <nav class="chapter-nav" id="chapterNav">
+            <button data-target="prologue" class="active">Prolog</button>
+            <button data-target="ch1">I. Al-Thurayya</button>
+            <button data-target="ch2">II. Kematian Pertama</button>
+            <button data-target="ch3">III. Langit Sekarat</button>
+            <button data-target="ch4">IV. Dosa</button>
+            <button data-target="ch5">V. Malam Kejatuhan</button>
+            <button data-target="ch6">VI. Tahun Nol</button>
+            <button data-target="ch7">VII. Tujuh Faksi</button>
+            <button data-target="ch8">VIII. Kosmologi</button>
+            <button data-target="ch9">IX. Masa Kini</button>
+            <button data-target="epilogue">Epilog</button>
+        </nav>
+
+        <!-- ==================== PROLOG ==================== -->
+        <section class="section visible" id="prologue">
+            <div class="roman-numeral">∅</div>
+            <h2>Prolog — Undangan untuk Pengembara</h2>
+            <p><span class="emphasis">Duduklah, pengembara.</span> Malam ini langit lebih gelap dari biasanya, dan angin membawa lebih banyak debu daripada cerita. Tapi kau beruntung — aku masih punya satu cerita tersisa, dan kau masih punya satu telinga untuk mendengar.</p>
+            <p>Lihat ke atas. Apa yang kau lihat?</p>
+            <p>Satu titik merah. Sendirian. Itu <span class="highlight-gold">Ra</span> — bintang terakhir yang masih menyala. Dahulu, sebelum kalender ini dimulai, sebelum kata "Oman" lahir dari bibir para pengungsi yang sekarat... langit ini <span class="emphasis">penuh</span>. Tujuh konstelasi agung bertahta di atas kita, masing-masing adalah makhluk hidup, kesadaran kosmik yang memandang dunia ini dengan kasih, dengan ingin tahu, dengan api yang tak pernah padam.</p>
+            <p class="dialogue">Mereka sudah tiada sekarang.<br>Atau mungkin... mereka hanya tidak bersinar lagi.</p>
+        </section>
+
+        <!-- ==================== BAB I ==================== -->
+        <section class="section" id="ch1">
+            <div class="roman-numeral">I</div>
+            <h2>Al-Thurayya — Dunia di Bawah Tujuh Mahkota Cahaya</h2>
+            <p>Sebelum menjadi Oman, dunia ini bernama <span class="highlight-gold">Al-Thurayya</span> — "Bintang-Bintang yang Berkumpul." Nama itu bukan metafora. Ia adalah kenyataan.</p>
+            <p>Bayangkan, pengembara. Bayangkan langit malam yang tidak hitam, tapi biru keemasan karena cahaya tujuh konstelasi yang begitu terang. Tidak ada malam yang benar-benar gelap di Al-Thurayya. Setiap sudut dunia dipeluk oleh sinar dari atas, dan dari sinar itu, kehidupan lahir.</p>
+            <p>Air di Al-Thurayya tidak berasal dari awan. Ia turun sebagai <span class="highlight-gold">Starfall</span> — titik-titik cahaya yang jatuh perlahan dari langit, seperti salju bercahaya, mengembun menjadi air ketika menyentuh tanah. Oasis bukanlah genangan biasa; ia adalah <span class="emphasis">darah bintang</span>, kolam-kolam air yang berkilau lemah saat malam, seolah menyimpan serpihan konstelasi di dalamnya. Meminumnya adalah menelan cahaya. Mandi di dalamnya adalah meremajakan Jiwa.</p>
+            <p>Enam ras — Human, Elf, Dark Elf, Wolfkin, Dwarf, Faeborn — hidup di bawah tujuh konstelasi yang masing-masing memiliki esensi, kehendak, dan karunia yang berbeda. Kota-kota dibangun dengan menara yang ujungnya menyentuh langit, bukan karena sombong, tapi karena mereka ingin lebih dekat dengan bintang-bintang yang mereka cintai. Kuil-kuil didirikan tanpa atap, agar Starfall bisa langsung masuk dan mengisi kolam-kolam suci.</p>
+            <p class="dialogue">Mereka pikir itu akan abadi.<br>Mereka salah.</p>
+            <h3>Tujuh Konstelasi Agung</h3>
+            <div class="faction-card">
+                <span class="faction-icon">☀️</span>
+                <h4>Al-Taj — Sang Mahkota</h4>
+                <p class="faction-motto">Konstelasi keteraturan dan kekuasaan. Pusat dari tujuh.</p>
+                <p class="faction-desc">Cahayanya putih keemasan, menjadi fondasi hukum dan peradaban. Dari konstelasi inilah Ra — bintang terakhir — berasal.</p>
+            </div>
+            <div class="faction-card">
+                <span class="faction-icon">🌑</span>
+                <h4>Al-Khafiy — Yang Tersembunyi</h4>
+                <p class="faction-motto">Konstelasi yang tidak pernah terlihat langsung.</p>
+                <p class="faction-desc">Hanya ruang kosong di antara bintang. Saksi bisu yang menolak untuk disingkap. Misteri yang memilih untuk tidak bersinar.</p>
+            </div>
+            <div class="faction-card">
+                <span class="faction-icon">🔷</span>
+                <h4>Al-Hakim — Sang Bijak</h4>
+                <p class="faction-motto">Konstelasi pengetahuan dan misteri.</p>
+                <p class="faction-desc">Bintang-bintangnya terus bergerak dan berubah pola, seolah menyampaikan pesan yang hanya bisa dibaca oleh mereka yang cukup sabar.</p>
+            </div>
+            <div class="faction-card">
+                <span class="faction-icon">🌿</span>
+                <h4>Al-Umm — Sang Ibu</h4>
+                <p class="faction-motto">Konstelasi kehidupan dan kesuburan.</p>
+                <p class="faction-desc">Di bawah sinarnya, hutan tumbuh, sungai mengalir, dan tanah melahirkan buah tanpa henti. Wolfkin memanggilnya Ibu.</p>
+            </div>
+            <div class="faction-card">
+                <span class="faction-icon">⚙️</span>
+                <h4>Al-Mitraqa — Sang Palu</h4>
+                <p class="faction-motto">Konstelasi penciptaan dan penempaan.</p>
+                <p class="faction-desc">Percikan dari bintang-bintangnya adalah api pertama yang mengajarkan ras lain cara menempa logam. Jantung para pengrajin.</p>
+            </div>
+            <div class="faction-card">
+                <span class="faction-icon">❤️</span>
+                <h4>Al-Dhabih — Sang Pengorbanan</h4>
+                <p class="faction-motto">Konstelasi yang bintang utamanya selalu merah darah.</p>
+                <p class="faction-desc">Ia adalah yang pertama rela menderita agar yang lain bisa bersinar. Jantung yang terus berdarah.</p>
+            </div>
+            <div class="faction-card">
+                <span class="faction-icon">🕳️</span>
+                <h4>Al-Faragh — Kekosongan</h4>
+                <p class="faction-motto">Konstelasi ketujuh yang tidak memiliki bentuk.</p>
+                <p class="faction-desc">Hanya ruang hitam di langit. Tidak ada yang tahu esensinya. Hanya bahwa ia ada. Dan diam. Dan tetap ada sampai sekarang.</p>
+            </div>
+        </section>
+
+        <!-- ==================== BAB II ==================== -->
+        <section class="section" id="ch2">
+            <div class="roman-numeral">II</div>
+            <h2>Kematian Pertama</h2>
+            <p>Tidak ada yang tahu persis kapan konstelasi pertama mati. Tidak ada yang melihat momen tepatnya — karena kematiannya terjadi di siang hari, ketika cahaya Ra (yang saat itu masih muda, masih kuat) menutupi seluruh langit.</p>
+            <p>Tapi semua orang <span class="emphasis">merasakannya.</span></p>
+            <p>Suatu sore, Starfall tiba-tiba berhenti di seluruh kuil yang didedikasikan untuk <span class="highlight-gold">Al-Dhabih</span>, Sang Pengorbanan. Kolam-kolam yang biasanya berkilau dengan cahaya merah lembut tiba-tiba menjadi air biasa — dingin, gelap, dan sunyi. Para pendeta berlarian ke observatorium, meneropong langit malam, mencari konstelasi merah itu.</p>
+            <p class="dialogue">Ia tidak ada.</p>
+            <p>Di tempat Al-Dhabih biasanya bersinar... hanya ada <span class="emphasis">ketiadaan</span>. Bukan ruang kosong biasa — tapi sesuatu yang lebih dalam. Seperti sepotong langit yang telah dihapus.</p>
+            <p>Kepanikan menyebar. Tapi para pemimpin Al-Thurayya menenangkan rakyat. "Satu konstelasi meredup bukanlah akhir," kata mereka. "Enam lainnya masih bersinar. Kita masih hidup. Kita akan mencari tahu apa yang terjadi."</p>
+            <p class="dialogue">Mereka tidak pernah menemukan jawabannya.<br>Karena pembunuhan belum selesai.</p>
+        </section>
+
+        <!-- ==================== BAB III ==================== -->
+        <section class="section" id="ch3">
+            <div class="roman-numeral">III</div>
+            <h2>Langit yang Sekarat</h2>
+            <p>Dalam kurun waktu seratus tahun — sekejap mata dalam skala kosmik — tiga konstelasi lain menyusul.</p>
+            <p><span class="highlight-gold">Al-Mitraqa</span>, Sang Palu, mati berikutnya. Para Dwarf yang mengandalkan percikan bintangnya untuk menempa logam tiba-tiba mendapati tempaan mereka dingin. Api yang dinyalakan dengan Starfire tidak mau menyala lagi. Peralatan yang ditempa dengan berkah konstelasi mulai retak.</p>
+            <p><span class="highlight-gold">Al-Umm</span>, Sang Ibu, mati ketiga. Hutan-hutan yang tumbuh di bawah sinarnya mulai layu bukan dari daun, tapi dari akar. Bunga-bunga yang biasanya mekar sepanjang tahun menutup kelopaknya dan tidak pernah membuka lagi. Para Wolfkin melolong ke langit malam — bukan sebagai ritual, tapi sebagai ratapan.</p>
+            <p><span class="highlight-gold">Al-Hakim</span>, Sang Bijak, mati keempat. Yang ini aneh. Bintang-bintangnya tidak meredup — mereka <span class="emphasis">bergerak</span>, lebih cepat dari biasanya, membentuk pola-pola yang tidak pernah terlihat sebelumnya. Para penyihir dan ilmuwan Al-Thurayya berkumpul, mencoba membaca pesan terakhirnya. Pola itu membentuk sesuatu yang menyerupai peringatan. Atau ketakutan. Lalu semua bintang di konstelasi itu padam bersamaan, seperti lilin yang ditiup.</p>
+            <p class="dialogue">Tiga konstelasi tersisa: Al-Taj, Al-Khafiy, dan Al-Faragh.<br>Dan dunia mulai mengering.</p>
+        </section>
+
+        <!-- ==================== BAB IV ==================== -->
+        <section class="section" id="ch4">
+            <div class="roman-numeral">IV</div>
+            <h2>Dosa yang Tidak Diketahui</h2>
+            <p>Inilah pertanyaan yang menghantui setiap cendekiawan, setiap pendeta, setiap orang tua yang menceritakan kisah ini pada anak-anak mereka sebelum tidur:</p>
+            <p class="dialogue">Kenapa konstelasi itu mati?</p>
+            <p>Tidak ada yang tahu. Tapi ada... teori. Beberapa mengatakan konstelasi tidak mati — mereka <span class="emphasis">dibunuh</span>. Seseorang atau sesuatu, dari sudut galaksi yang tidak terjangkau, sedang memadamkan bintang-bintang satu per satu.</p>
+            <p>Yang lain percaya bahwa justru <span class="emphasis">Al-Thurayya sendiri penyebabnya</span>. Peradaban yang terlalu maju, sihir yang terlalu kuat, penggalian terlalu dalam ke inti planet untuk mencari Star Core — mungkin semua itu melukai konstelasi. Mungkin mereka memilih mati daripada menyaksikan anak-anak mereka menghancurkan diri sendiri.</p>
+            <p>Dan ada bisikan — bisikan yang hanya terdengar di gua-gua terdalam, di kuil-kuil terbengkalai, di telinga mereka yang berani mendengarkan keheningan — bahwa <span class="emphasis">satu dari konstelasi yang tersisa adalah pembunuhnya.</span> Tapi yang mana? Al-Taj yang angkuh? Al-Khafiy yang misterius? Atau Al-Faragh... yang dari awal tidak pernah bersinar?</p>
+            <p class="dialogue">Tidak ada yang berani menjawab.</p>
+        </section>
+
+        <!-- ==================== BAB V ==================== -->
+        <section class="section" id="ch5">
+            <div class="roman-numeral">V</div>
+            <h2>Malam Kejatuhan</h2>
+            <p>Kematian konstelasi kelima adalah yang paling dikenang — karena ia disaksikan oleh seluruh dunia.</p>
+            <p><span class="highlight-gold">Al-Khafiy</span>, Yang Tersembunyi, konstelasi yang tidak pernah terlihat langsung... tiba-tiba <span class="emphasis">terlihat</span>. Seluruh Al-Thurayya menatap langit malam itu. Di tempat yang biasanya hanya ada ruang kosong, kini ada sesuatu: cahaya redup, ungu kehitaman, berdenyut seperti jantung yang berdetak untuk terakhir kalinya.</p>
+            <p>Cahaya itu berdenyut sekali. Dua kali. Tiga kali. Lalu ia meledak. Bukan ledakan yang menghancurkan — tapi ledakan <span class="emphasis">kegelapan</span>. Gelombang hitam menyebar dari pusat konstelasi, menelan bintang-bintang di sekitarnya. Selama beberapa detik, seluruh langit menjadi hitam total — bahkan Ra pun tidak terlihat.</p>
+            <p>Lalu perlahan, kegelapan itu mundur, dan yang tersisa hanyalah... ketiadaan. Al-Khafiy benar-benar lenyap. Bahkan ruang kosong yang biasanya ia tempati kini terisi oleh bintang-bintang kecil yang tidak berarti.</p>
+            <p class="dialogue">Al-Thurayya menangis malam itu. Secara harfiah. Starfall terakhir turun bukan sebagai cahaya lembut, tapi sebagai hujan panas — air yang mendidih, berjatuhan dari langit seperti air mata kemarahan.</p>
+            <p><span class="emphasis">Dua yang tersisa: Al-Taj dan Al-Faragh. Mahkota dan Kekosongan.</span></p>
+        </section>
+
+        <!-- ==================== BAB VI ==================== -->
+        <section class="section" id="ch6">
+            <div class="roman-numeral">VI</div>
+            <h2>Tahun Nol — Kelahiran Oman</h2>
+            <p>Al-Taj, Sang Mahkota, adalah konstelasi terkuat. Ia adalah pusat dari tujuh, yang pertama menyala di awal waktu. Selama kematian saudara-saudaranya, ia bertahan. Cahayanya tetap putih keemasan, dan Starfall dari Al-Taj masih turun — meski semakin jarang, semakin sedikit. Tapi semua orang tahu: <span class="emphasis">ia juga akan mati.</span></p>
+            <p>Ketakutan itu menjadi kenyataan pada suatu malam yang sekarang dikenang sebagai <span class="highlight-gold">Malam Mahkota Patah</span>. Al-Taj tidak meledak seperti Al-Khafiy. Ia tidak meredup perlahan seperti yang lain. Ia <span class="emphasis">retak</span>. Garis-garis cahaya di langit mulai terbelah, seperti mahkota yang dihantam palu. Potongan-potongan cahaya jatuh dari langit — bukan Starfall, tapi <span class="emphasis">Star Fragments</span>, pecahan konstelasi yang terbakar masuk ke atmosfer, menghantam gurun, menciptakan kawah-kawah raksasa.</p>
+            <p class="dialogue">Dan ketika pagi tiba... Al-Taj tidak sepenuhnya mati. Satu bintang dari konstelasi itu masih menyala. Hanya satu — bintang pusatnya, yang paling terang, yang paling tua. Ia berdiri sendirian di langit fajar, merah membara, seolah menahan sakit. Ia adalah Ra — sisa terakhir dari Al-Taj.</p>
+            <p>Para penyintas menatap langit pagi itu. Tidak ada lagi tujuh mahkota cahaya. Hanya satu bintang merah, dan satu kekosongan hitam. Mereka memutuskan untuk memulai kembali. <span class="highlight-gold">Tahun 0 Ra</span> — tahun di mana hanya satu saksi yang tersisa di langit. Dan dunia yang telah hancur itu mereka beri nama baru:</p>
+            <p class="dialogue" style="text-align:center; font-size:1.3rem; letter-spacing:0.1em;">OMAN — "Yang Tersisa."</p>
+        </section>
+
+        <!-- ==================== BAB VII ==================== -->
+        <section class="section" id="ch7">
+            <div class="roman-numeral">VII</div>
+            <h2>Tujuh Faksi, Tujuh Luka</h2>
+            <p>Dalam kekacauan setelah kejatuhan, para penyintas tidak lagi bersatu. Mereka terpecah — bukan karena ras atau wilayah, tapi karena <span class="emphasis">hubungan spiritual mereka dengan konstelasi yang telah mati.</span> Dari sinilah lahir Tujuh Faksi Oman.</p>
+
+            <div class="faction-card">
+                <span class="faction-icon">☀️</span>
+                <h4>Aurelian Empire</h4>
+                <p class="faction-motto">"Cahaya Terakhir adalah Takhta Kami."</p>
+                <p class="faction-desc">Pewaris <strong>Al-Taj</strong>. Mereka membangun menara cermin raksasa untuk memantulkan cahaya kembali ke Ra, memberinya makan, menundanya dari kematian. Kasta mereka adalah Kasta Cahaya: The Radiant, The Shimmering, The Dimming, The Lightless. Kaisar disebut Pemegang Mahkota — dan jika Ra meredup saat penobatannya, ia dianggap tidak layak.</p>
+            </div>
+            <div class="faction-card">
+                <span class="faction-icon">🌑</span>
+                <h4>Shadow Covenant</h4>
+                <p class="faction-motto">"Kami Menanti Malam yang Sempurna."</p>
+                <p class="faction-desc">Pelayat <strong>Al-Khafiy</strong>. Mereka percaya kematian konstelasi adalah pembebasan. Cahaya adalah ikatan, kegelapan adalah kebebasan. Mereka memadamkan semua lampu dalam ritual Hening Malam dan menunggu Malam Akhir — saat Ra pun padam.</p>
+            </div>
+            <div class="faction-card">
+                <span class="faction-icon">🔷</span>
+                <h4>Arcane Consortium</h4>
+                <p class="faction-motto">"Bintang Bisa Direkayasa."</p>
+                <p class="faction-desc">Pencari <strong>Al-Hakim</strong>. Mereka meneliti Star Chart kuno dan menjalankan Project Al-Thurayya — upaya menciptakan konstelasi buatan di laboratorium. Apakah berhasil? Tidak ada yang tahu. Tapi kadang, cahaya aneh terlihat dari menara mereka.</p>
+            </div>
+            <div class="faction-card">
+                <span class="faction-icon">🌿</span>
+                <h4>Wildlands Pact</h4>
+                <p class="faction-motto">"Kami Mendengar Tangisan Bumi dan Bintang."</p>
+                <p class="faction-desc">Anak-anak <strong>Al-Umm</strong>. Mereka percaya konstelasi mati karena patah hati. Setiap pohon yang mereka tanam adalah antena — sinyal ke langit: "Kami sudah berubah. Pulanglah." Mereka menolak senjata logam.</p>
+            </div>
+            <div class="faction-card">
+                <span class="faction-icon">⚙️</span>
+                <h4>Ironforge Guild</h4>
+                <p class="faction-motto">"Bintang adalah Mesin. Mesin Bisa Diperbaiki."</p>
+                <p class="faction-desc">Penerus <strong>Al-Mitraqa</strong>. Mereka menambang Star Metal dan membangun The Ascension Engine — menara yang dirancang mencapai langit untuk menyalakan kembali konstelasi secara manual. Bagi mereka, menyerah bukanlah opsi.</p>
+            </div>
+            <div class="faction-card">
+                <span class="faction-icon">❤️</span>
+                <h4>Crimson Crusade</h4>
+                <p class="faction-motto">"Hanya Darah yang Bisa Menyalakan Kembali Api Kosmik."</p>
+                <p class="faction-desc">Pemuja <strong>Al-Dhabih</strong>. Mereka percaya konstelasi butuh bahan bakar — dan bahan bakar itu adalah Jiwa. Ritual Star Bleeding: menyumbangkan darah ke Sumur Pengorbanan agar Ra tetap menyala. Mereka tidak kejam — mereka putus asa.</p>
+            </div>
+            <div class="faction-card">
+                <span class="faction-icon">🕳️</span>
+                <h4>Void Council</h4>
+                <p class="faction-motto">"Kami Mendengar Bintang-Bintang yang Telah Mati... dan Mereka Masih Berbisik."</p>
+                <p class="faction-desc">Penjaga <strong>Al-Faragh</strong>. Mereka mempelajari Dark Stars — bintang mati dengan gravitasi begitu kuat sehingga cahaya pun tidak bisa lolos. Mereka tahu kenapa konstelasi mati. Dan mereka memilih untuk tidak memberitahu siapa pun.</p>
+            </div>
+        </section>
+
+        <!-- ==================== BAB VIII ==================== -->
+        <section class="section" id="ch8">
+            <div class="roman-numeral">VIII</div>
+            <h2>Kosmologi dan Kekuatan</h2>
+            <h3>Starwater — Darah Bintang</h3>
+            <p>Air di Oman bukan H₂O biasa. Ia adalah <span class="highlight-gold">cahaya konstelasi yang mengembun</span>. Setiap oasis membawa "rasa" dari konstelasi yang menciptakannya. Starwater Aurelian terasa hangat dan teratur. Starwater Wildlands terasa segar dan liar. Starwater Void... tidak berasa sama sekali. Seperti meminum keheningan. Seperti menelan rahasia.</p>
+            <h3>Zen — Kristal Bintang</h3>
+            <p>Zen adalah <span class="emphasis">kristalisasi Starwater murni</span> — atau kristalisasi emosi intens dari Jiwa. Jiwa sendiri adalah <span class="emphasis">serpihan bintang</span> yang terperangkap dalam tubuh. Itulah sebabnya emosi kuat bisa menciptakan Zen: Jiwa, yang berasal dari bintang, secara alami menghasilkan cahaya yang bisa membeku.</p>
+            <p><span class="highlight-gold">Zen Murni</span> — emas seperti sinar Ra. <span class="highlight-gold">Zen Kabur</span> — putih susu. <span class="highlight-gold">Zen Gelap</span> — ungu kehitaman seperti nebula mati.</p>
+            <h3>Tiga Jalan Sihir</h3>
+            <p><span class="emphasis">Star Weaving (Soul Weaving):</span> Membakar Jiwa sendiri — serpihan bintang di dalam diri. Risiko: menjadi Hollow, tubuh tanpa cahaya internal.</p>
+            <p><span class="emphasis">Zen Shaping:</span> Menghancurkan kristal Zen untuk melepaskan energi. Aman bagi Jiwa, tapi Zen terbatas.</p>
+            <p><span class="emphasis">Void Channeling:</span> Meminjam energi dari Dark Stars. Kekuatannya tak terbatas, tapi Void selalu mengambil lebih banyak daripada yang ia berikan.</p>
+        </section>
+
+        <!-- ==================== BAB IX ==================== -->
+        <section class="section" id="ch9">
+            <div class="roman-numeral">IX</div>
+            <h2>Oman Hari Ini — Tahun 2500 Ra</h2>
+            <p>2500 tahun telah berlalu sejak Malam Mahkota Patah. The Great Desiccation terus berlanjut. Starfall hampir tidak pernah terjadi. Oasis menyusut setiap tahun. Tujuh faksi bertahan dalam perdamaian rapuh — The Second Oath melarang perang terbuka.</p>
+            <p>Dan kemudian... sesuatu terjadi. Seorang pelancong ditemukan di perbatasan gurun. Tubuhnya setengah terkubur pasir. Bibirnya pecah. Matanya kosong. Tapi di tangannya... ada sekantong air. <span class="emphasis">Air itu bercahaya.</span> Bukan hanya satu warna — tapi <span class="emphasis">tujuh warna</span>, berlapis-lapis, seperti miniatur langit Al-Thurayya.</p>
+            <p>Air itu adalah <span class="highlight-gold">Starwater murni dari semua tujuh konstelasi</span>. Termasuk yang telah mati. Termasuk yang telah lenyap selama ribuan tahun.</p>
+            <p class="dialogue">"Aku menemukannya... di bawah pasir hitam... masih ada... mereka masih ada..."</p>
+            <p><span class="emphasis">The Last Aquifer.</span> Bukan sekadar air. Tapi mungkin lokasi di mana konstelasi yang mati masih bersinar. Atau tempat di mana mereka bisa dinyalakan kembali. Semua faksi mengirimkan agen terbaik mereka. <span class="highlight-gold">Kau adalah salah satunya.</span></p>
+        </section>
+
+        <!-- ==================== EPILOG ==================== -->
+        <section class="section" id="epilogue">
+            <div class="roman-numeral">∴</div>
+            <h2>Epilog — Malam Ketujuh</h2>
+            <p class="dialogue">Malam ini, kau bermimpi. Tapi ini bukan mimpi biasa. Kau berdiri di padang pasir yang bukan pasir — tapi kaca hitam, halus, memantulkan langit. Di atasmu, tujuh konstelasi bersinar terang. Bukan seperti di cerita — kau melihatnya sendiri.</p>
+            <p>Mereka bersinar. Mereka hidup. Dan mereka... berbicara. Bukan dengan kata-kata — tapi dengan getaran di Jiwamu:</p>
+            <p class="dialogue">"Kami tidak pergi."<br>"Kami hanya tidak lagi bersinar."<br>"Temukan kami di tempat cahaya tidak bisa lolos."<br>"Temukan Al-Thurayya yang tersembunyi."</p>
+            <p>Lalu satu per satu, mereka meredup. Tapi tidak seperti kematian — lebih seperti lilin yang ditutup tangan, menunggu untuk dibuka kembali. Dan saat cahaya terakhir hilang, kau melihat sesuatu di tanah. Sebuah batu hitam dengan bintik-bintik cahaya di dalamnya. Miniatur galaksi. Pecahan langit yang jatuh.</p>
+            <p>Kau mengambilnya. Dan kau terbangun.</p>
+            <p style="text-indent:0;">* * *</p>
+            <p>Sekarang kau duduk di sini, pengembara, dengan batu hitam itu di tanganmu. Benda itu hangat. Berdenyut pelan, seperti detak jantung yang sangat jauh. Kau bukan satu-satunya. Di seluruh Oman, yang lain juga terbangun dengan benda di tangan mereka. Fragmen yang berbeda. Potongan yang berbeda. Jika disatukan... ke mana mereka akan menunjuk?</p>
+            <p class="dialogue">The Last Aquifer? Al-Thurayya yang hilang? Atau jawaban atas pertanyaan yang belum pernah dijawab: <strong>Siapa yang membunuh bintang-bintang?</strong></p>
+            <p>Di luar, Ra mulai terbit. Merah. Sendirian. Tapi pagi ini, untuk pertama kalinya dalam 2500 tahun, kau merasa Ra tidak sedih. Ra... <span class="emphasis">menunggu</span>. Dan di langit yang masih gelap di barat, di tempat Al-Faragh bersemayam — Kekosongan yang tidak pernah bersinar — kau melihat sesuatu. Sekilas. Mungkin hanya imajinasi. Tapi kau bersumpah... <span class="emphasis">ada sesuatu yang berkedip.</span></p>
+            <p style="text-indent:0; text-align:center; margin-top:30px; color:var(--gold-light); letter-spacing:0.06em;">
+                ✦ ✦ ✦
+            </p>
+            <p class="dialogue" style="text-align:center; font-size:1.1rem; margin-top:10px;">
+                Minumlah, pengembara. Perjalananmu baru saja dimulai.<br>
+                Selamat datang di Oman.<br>
+                Di sini, bintang-bintang telah mati — tapi kematian bukanlah akhir.<br>
+                Kadang, kematian hanyalah cara alam semesta menyimpan cahayanya...<br>
+                untuk seseorang yang cukup berani mencarinya.
+            </p>
+            <p style="text-align:center; color:var(--star-white); letter-spacing:0.08em; margin-top:20px; font-size:1.1rem;">
+                <strong>...dan malam ini, untuk pertama kalinya... bintang-bintang bermimpi tentangmu.</strong>
+            </p>
+        </section>
+
+        <!-- FOOTER -->
+        <div class="footer">
+            <p class="stars-divider">✦ ✦ ✦ ✦ ✦</p>
+            <p>OMAN — Kitab Langit yang Kehilangan Bintang</p>
+            <p style="font-size:0.75rem; opacity:0.5;">Tahun 2500 Ra · The Last Aquifer awaits</p>
+        </div>
+
+    </div>
+
+    <!-- BACK TO TOP -->
+    <button id="back-to-top" title="Kembali ke atas">↑</button>
+
+    <script>
+        // ==================== STARFIELD CANVAS ====================
+        (function() {
+            const canvas = document.getElementById('starfield');
+            const ctx = canvas.getContext('2d');
+            let stars = [];
+            const STAR_COUNT = 280;
+            let width, height;
+
+            function resize() {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', () => {
+                resize();
+                initStars();
+            });
+
+            function initStars() {
+                stars = [];
+                for (let i = 0; i < STAR_COUNT; i++) {
+                    stars.push({
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        r: Math.random() * 1.8 + 0.3,
+                        twinkleSpeed: Math.random() * 0.015 + 0.004,
+                        twinkleOffset: Math.random() * Math.PI * 2,
+                        baseAlpha: Math.random() * 0.7 + 0.3,
+                        hue: Math.random() < 0.25 ? 40 + Math.random() * 20 : Math.random() < 0.15 ?
+                            200 + Math.random() * 30 : 0,
+                        saturation: Math.random() < 0.3 ? '70%' : '0%',
+                    });
+                }
+            }
+            initStars();
+
+            function draw(timestamp) {
+                ctx.clearRect(0, 0, width, height);
+                stars.forEach(s => {
+                    const alpha = s.baseAlpha + Math.sin(timestamp * s.twinkleSpeed + s
+                        .twinkleOffset) * 0.25;
+                    const clampedAlpha = Math.max(0.15, Math.min(1, alpha));
+                    const hsl = s.hue > 0 ?
+                        `hsla(${s.hue}, ${s.saturation}, 80%, ${clampedAlpha})` :
+                        `rgba(240,230,210,${clampedAlpha})`;
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                    ctx.fillStyle = hsl;
+                    ctx.fill();
+                    if (s.r > 1.3 && clampedAlpha > 0.7) {
+                        ctx.beginPath();
+                        ctx.arc(s.x, s.y, s.r * 2.5, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(212,168,131,${clampedAlpha * 0.08})`;
+                        ctx.fill();
+                    }
+                });
+                requestAnimationFrame(draw);
+            }
+            requestAnimationFrame(draw);
+
+            // Occasionally add a shooting star
+            function shootingStar() {
+                const sx = Math.random() * width * 0.6;
+                const sy = Math.random() * height * 0.4;
+                const ex = sx + (Math.random() * 250 + 100);
+                const ey = sy + (Math.random() * 100 + 30);
+                const progress = { val: 0 };
+                const duration = 800 + Math.random() * 600;
+                const start = performance.now();
+
+                function anim(ts) {
+                    const elapsed = ts - start;
+                    progress.val = Math.min(1, elapsed / duration);
+                    const cx = sx + (ex - sx) * progress.val;
+                    const cy = sy + (ey - sy) * progress.val;
+                    ctx.beginPath();
+                    ctx.moveTo(sx, sy);
+                    ctx.lineTo(cx, cy);
+                    ctx.strokeStyle = `rgba(255,255,255,${(1 - progress.val) * 0.7})`;
+                    ctx.lineWidth = 1.5;
+                    ctx.shadowColor = 'rgba(255,255,255,0.6)';
+                    ctx.shadowBlur = 8;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                    if (progress.val < 1) {
+                        requestAnimationFrame(anim);
+                    }
+                }
+                requestAnimationFrame(anim);
+            }
+            setInterval(() => {
+                if (Math.random() < 0.35) shootingStar();
+            }, 6000 + Math.random() * 10000);
+        })();
+
+        // ==================== SCROLL PROGRESS BAR ====================
+        (function() {
+            const bar = document.getElementById('progress-bar');
+            window.addEventListener('scroll', () => {
+                const scrollTop = window.scrollY;
+                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+                bar.style.width = progress + '%';
+            });
+        })();
+
+        // ==================== BACK TO TOP ====================
+        (function() {
+            const btn = document.getElementById('back-to-top');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 500) {
+                    btn.classList.add('show');
+                } else {
+                    btn.classList.remove('show');
+                }
+            });
+            btn.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        })();
+
+        // ==================== INTERSECTION OBSERVER (FADE IN SECTIONS) ====================
+        (function() {
+            const sections = document.querySelectorAll('.section');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
+            sections.forEach(s => observer.observe(s));
+        })();
+
+        // ==================== CHAPTER NAVIGATION ====================
+        (function() {
+            const buttons = document.querySelectorAll('.chapter-nav button');
+            const sections = {};
+            buttons.forEach(btn => {
+                const targetId = btn.getAttribute('data-target');
+                const el = document.getElementById(targetId);
+                if (el) sections[targetId] = el;
+            });
+
+            // Smooth scroll on click
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetId = btn.getAttribute('data-target');
+                    const el = document.getElementById(targetId);
+                    if (el) {
+                        const navHeight = document.getElementById('chapterNav')
+                            .offsetHeight;
+                        const top = el.getBoundingClientRect().top + window.scrollY -
+                            navHeight - 30;
+                        window.scrollTo({ top, behavior: 'smooth' });
+                    }
+                });
+            });
+
+            // Highlight active chapter on scroll
+            function updateActiveNav() {
+                const navHeight = document.getElementById('chapterNav').offsetHeight;
+                const scrollPos = window.scrollY + navHeight + 60;
+                let activeId = null;
+
+                for (const [id, el] of Object.entries(sections)) {
+                    if (el.offsetTop <= scrollPos) {
+                        activeId = id;
+                    }
+                }
+
+                buttons.forEach(btn => {
+                    const target = btn.getAttribute('data-target');
+                    if (target === activeId) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+            window.addEventListener('scroll', updateActiveNav);
+            updateActiveNav();
+        })();
+
+        console.log('%c✦ OMAN — Kitab Langit yang Kehilangan Bintang ✦',
+            'color:#d4a853; font-size:1.2rem; letter-spacing:0.1em;');
+        console.log('%c"Di sini, bintang-bintang telah mati — tapi kematian bukanlah akhir."',
+            'color:#c8c0b8; font-style:italic;');
+    </script>
+</body>
+</html>
